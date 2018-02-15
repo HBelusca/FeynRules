@@ -1141,13 +1141,13 @@ If[Not[repo], Print["   - Loading particle classes."]];
 
           If[(temppdg === {NoPDG}), temppdg = Table[NoPDG[++$PDGNb], {Length[tempclassmembers]}]];
 
-
+(*
           tempMGgauge = Which[tempMGgauge === S, S,
                               Length[MRIndexRange[Index[tempMGgauge]]] == 3, T,
                               Length[MRIndexRange[Index[tempMGgauge]]] == 6, S6,
                               Length[MRIndexRange[Index[tempMGgauge]]] == 8, O,
                               True, Message[LoadModel::Gauge];Abort[]];
-
+*)
 
           tempMGantipartname = Which[tempMGantipartname === MR$Null, StringJoin[ToString[#], "~"]& /@ tempclassmembers,
                                      Length[tempMGantipartname] === 1, Table[Sequence @@ tempMGantipartname ,{nclassmembers}],
