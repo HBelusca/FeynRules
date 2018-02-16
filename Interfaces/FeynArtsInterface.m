@@ -1183,7 +1183,7 @@ FR$FeynArtsInterface = True;
       If[LoopOpt, FR$Loop=True];
       Do[Print["Calculating Feynman rules for ", defname[[kmg]]];
          If[FA$FlavExpCheck, 
-            FeynmanRules[mylags[[kmg]], Sequence @@ FilterRules[tempoptions,Options[FeynmanRules]], Name -> defname[[kmg]], ScreenOutput->False]],
+            FeynmanRules[mylags[[kmg]], Sequence @@ FilterRules[tempoptions,Options[FeynmanRules]], Name -> defname[[kmg]], ScreenOutput->True]],
          {kmg, Length[defname]}];
       If[LoopOpt, FR$Loop=False];
 
@@ -1197,7 +1197,7 @@ FR$FeynArtsInterface = True;
 
          If[LoopOpt, FR$Loop=True];
          Do[Print["Calculating Feynman rules for ", defname[[kmg]]];
-         FeynmanRules[mylags[[kmg]], Sequence @@ DeleteCases[FilterRules[tempoptions,Options[FeynmanRules]],FlavorExpand->_], Name -> defname[[kmg]], ScreenOutput -> False, FlavorExpand -> True],         
+         FeynmanRules[mylags[[kmg]], Sequence @@ DeleteCases[FilterRules[tempoptions,Options[FeynmanRules]],FlavorExpand->_], Name -> defname[[kmg]], ScreenOutput -> True, FlavorExpand -> True],         
 {         kmg, Length[defname]}]];
 
          If[LoopOpt, FR$Loop=False];
@@ -1336,7 +1336,7 @@ Print["Writing FeynArts model file into directory ", tempoutfile];
 
 FR$FeynArtsInterface = True;  
 
-      WriteParameters[NumericalOnly -> True, ScreenOutput -> False, Output -> StringTake[outfile,{1,StringLength[outfile]-4}]<>".pars"];
+      WriteParameters[NumericalOnly -> True, ScreenOutput -> True, Output -> StringTake[outfile,{1,StringLength[outfile]-4}]<>".pars"];
 
 FR$FeynArtsInterface = False;
  
