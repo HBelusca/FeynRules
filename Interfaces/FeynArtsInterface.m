@@ -1100,7 +1100,7 @@ WriteFeynArtsOutput[lags__] := WriteFeynArtsOutput[{lags}] /; (And @@ ((Head[#] 
 
 WriteFeynArtsOutput[{lags__}, options___] := Block[{vertlength,verttype,tempclass, vertlistFA,genFileOpt,diracIndOpt,couplRenameOpt,j,vertN=1, 
 													WFAflavexp, defname,outfile, genfile, temp, tempoutfile, tempoptions, tempxi, Rulli, 
-													Massdone = {}, vertexlistFA, FlatDot, LoopOpt,CTlags,orderOpt,MyPat,mylags = {lags},CTcnt=0,tmp,tmppara,wfoit},
+													Massdone = {}, vertexlistFA, FlatDot, LoopOpt,CTlags,orderOpt,expandParam,MyPat,mylags = {lags},CTcnt=0,tmp,tmppara,wfoit},
       Print[" - - - FeynRules interface to FeynArts - - -"];
       Print["      C. Degrande C. Duhr, 2013"];
       Print["      Counterterms: B. Fuks, 2012"];
@@ -1119,14 +1119,32 @@ WriteFeynArtsOutput[{lags__}, options___] := Block[{vertlength,verttype,tempclas
       orderOpt=LoopOrder/.{options}/.Options[WriteFeynArtsOutput];
       LoopOpt=If[orderOpt=!=MR$Null,True,False];
       If[LoopOpt,
-        FR$Loop=True; 
-        FR$LoopOrder=If[MatrixQ[orderOpt],Plus@@orderOpt[[All,2]],orderOpt[[2]]];
-        CTlags=Block[{},CTcnt++;Print["Turning to Lagrangian "<>ToString[CTcnt]<>"..."]; (ExtractCounterterms[#,orderOpt]-#)]&/@mylags;
+        FR$Loop=True;
+        FR$LoopOrder=If[ListQ[orderOpt]&&(And@@Map[ListQ,orderOpt]), Plus@@orderOpt[[All,2]], orderOpt[[2]]];
+
+        orderOpt=If[ListQ[orderOpt]&&(And@@Map[ListQ,orderOpt]), orderOpt, {orderOpt}];
+
+(** Tag the expansion variables with an helper function: this will help later for tracking which variables have been used for the expansion,
+ ** and for fixing the expansion while making ExtractCounterterms[] happy.
+ **)
+        orderOpt = MapAt[MyPat[#]&, orderOpt, {All, 1}];
+
+        CTlags = Block[{},CTcnt++;Print["Turning to Lagrangian "<>ToString[CTcnt]<>"..."]; (ExtractCounterterms[#,orderOpt]-#)]&/@mylags;
+
+(** Fix the appearance of conjugated expansion parameters for terms with complex fields (ghosts, fermions) **)
+        CTlags = CTlags/.Conjugate[MyPat[a_]]:>MyPat[a];
+
+(** Terms with complex fields get extra spurious orderOpt powers so I remove them here. The proper fix is to fix ExtractCounterterms[] instead. **)
+        CTlags = CTlags/.MyPat[a_]:>(expandParam * MyPat[a]);
+        CTlags = (Series[CTlags, {expandParam, 0, FR$LoopOrder}] // Normal) /. expandParam->1;
+        CTlags = CTlags/.Map[If[Length[#]>=3, #[[1]]->#[[3]], Nothing]&, orderOpt];
+        CTlags = CTlags/.MyPat[a_]:>a;
+
         CTlags=OptimizeIndex/@CTlags;
         CTlags=CTlags/.(M$DeltaToParameters/.RuleDelayed[a_[orders__],b_]:>MyRule[b/.ids->MyPat[ids,__],b FR$LoopDum^Plus@orders]/.MyRule->Rule/.MyPat->Pattern);
-       mylags=mylags + CTlags;
+        mylags=mylags + CTlags;
         FR$Loop=False;,
-        FR$LoopOrder=0;];      
+        FR$LoopOrder=0;];
       (* END Benj *)
 
 

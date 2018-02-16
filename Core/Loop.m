@@ -349,7 +349,7 @@ PerturbativelyExpand[FR$del_[args__],ExpOrder_List]:=Block[{NewOrder,param,Pindx
   PrmToRenomList,deltaFuncList,deltaParamList,deltaOrderList},
 
   (* Initialization *)
-  NewOrder=If[MatrixQ[ExpOrder],ExpOrder,{ExpOrder}];
+  NewOrder=If[ListQ[ExpOrder]&&(And@@Map[ListQ,ExpOrder]), ExpOrder, {ExpOrder}];
   PrmToRenomList=Flatten[Union[MassList[[2,All,2]],MR$ParameterList,(ParameterName/.MR$ParameterRules[#])&/@MR$ParameterList]]/.Rule[a_,b_]:>b;
   param=FR$del[args]/.FR$del[{prm_},__]->prm/.FR$del[args]->MR$Null;
   newparam=param;
@@ -416,7 +416,7 @@ resu];
 ExtractCounterterms[lagr_,ExpOrder_List]:=Block[{NewOrder,ExpLag,WaveFunctions,PrmToRenormList,GrpMat,MyRuleDelayed},
   (* Initialization *)
   Print["Extraction of the counterterm Lagrangian."];
-  NewOrder=If[MatrixQ[ExpOrder],ExpOrder,{ExpOrder}];
+  NewOrder=If[ListQ[ExpOrder]&&(And@@Map[ListQ,ExpOrder]), ExpOrder, {ExpOrder}];
   ExpLag=Expand[ExpandIndices[lagr]];
   WaveFunctions=FieldRenormalization[];
   ParameterRenormalization[];
