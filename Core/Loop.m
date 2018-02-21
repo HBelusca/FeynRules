@@ -413,7 +413,12 @@ resu];
 (*ExtractCounterterms*)
 
 
-ExtractCounterterms[lagr_,ExpOrder_List]:=Block[{NewOrder,ExpLag,WaveFunctions,PrmToRenormList,GrpMat,MyRuleDelayed},
+Options[ExtractCounterterms]={OrderExpand->True};
+
+ExtractCounterterms[lagr_,ExpOrder_List,OptionsPattern[] (*options___*)]:=Block[{OrdExp,NewOrder,ExpLag,WaveFunctions,PrmToRenormList,GrpMat,MyRuleDelayed},
+
+  OrdExp = OptionValue[OrderExpand]; (* OrderExpand/.{options}/.Options[ExtractCounterterms]; *)
+
   (* Initialization *)
   Print["Extraction of the counterterm Lagrangian."];
   NewOrder=If[ListQ[ExpOrder]&&(And@@Map[ListQ,ExpOrder]), ExpOrder, {ExpOrder}];
@@ -458,20 +463,30 @@ ExtractCounterterms[lagr_,ExpOrder_List]:=Block[{NewOrder,ExpLag,WaveFunctions,P
       OptimizeIndex[#]]]&/@ExpLag;
 
   (* Expansion of the renormalization constants *)
-  Print["Renormalization constant perturbative expansion..."];
-  ExpLag = Expand[# /. FR$deltaZ[args__] :> PerturbativelyExpand[FR$deltaZ[args], NewOrder]] &/@ ExpLag;
-  ExpLag = Expand[# /. FR$delta[args__] :> PerturbativelyExpand[FR$delta[args], NewOrder]] &/@ ExpLag; 
+  If[OrdExp,
+    Print["Renormalization constant perturbative expansion..."];
+    ExpLag = Expand[# /. FR$deltaZ[args__] :> PerturbativelyExpand[FR$deltaZ[args], NewOrder]] &/@ ExpLag;
+    ExpLag = Expand[# /. FR$delta[args__] :> PerturbativelyExpand[FR$delta[args], NewOrder]] &/@ ExpLag; 
 
-  (* Rejecting all terms which have an higher order *)
-  ExpLag=Plus@@ExpLag;
-  ExpLag = If[Head[ExpLag]=!=Plus,{ExpLag},List@@ExpLag];
-  ExpLag = Block[{ttemp, mufmuf, result}, 
-    ttemp = # //. {FR$delta[ar__][ord__] :> mufmuf[{ord}], FR$deltaZ[ar__][ord__] :> mufmuf[{ord}], 
-      mufmuf[aaa_List]*mufmuf[bbb_List] -> mufmuf[aaa+bbb], Power[mufmuf[aaa_List],n_] -> mufmuf[n*aaa], Conjugate[mufmuf[arg__]] -> mufmuf[arg]};
-    result = If[MatchQ[ttemp, _*mufmuf[__]], 
-      ttemp = ttemp /.(_*mufmuf[argus__] :> Select[NewOrder[[All,2]] - argus, #1 < 0 & ]); If[ttemp =!= {}, 0, #],
-      #];
-    result] &/@ ExpLag;
+    (* Rejecting all terms which have an higher order *)
+    ExpLag=Plus@@ExpLag;
+    ExpLag = If[Head[ExpLag]=!=Plus,{ExpLag},List@@ExpLag];
+    ExpLag = Block[{ttemp, mufmuf, result}, 
+      ttemp = # //. {FR$delta[ar__][ord__] :> mufmuf[{ord}], FR$deltaZ[ar__][ord__] :> mufmuf[{ord}], 
+        mufmuf[aaa_List]*mufmuf[bbb_List] -> mufmuf[aaa+bbb], Power[mufmuf[aaa_List],n_] -> mufmuf[n*aaa], Conjugate[mufmuf[arg__]] -> mufmuf[arg]};
+      result = If[MatchQ[ttemp, _*mufmuf[__]], 
+        ttemp = ttemp /.(_*mufmuf[argus__] :> Select[NewOrder[[All,2]] - argus, #1 < 0 & ]); If[ttemp =!= {}, 0, #],
+        #];
+      result] &/@ ExpLag;
+    ,
+    (* We still need to keep only the first order in FR$delta *)
+    Print["Renormalization constant expansion..."];
+    ExpLag=Plus@@ExpLag;
+    ExpLag = ExpLag /. FR$delta[xx__]->FR$CT*FR$delta[xx] /. FR$deltaZ[xx__]->FR$CT*FR$deltaZ[xx] /. FR$deltat[xx__]->FR$CT*FR$deltat[xx];
+    ExpLag = ExpLag /. Conjugate[FR$delta[a__]]->FR$delta[a] /. Conjugate[FR$CT*b__]->Conjugate[b]*FR$CT;
+    ExpLag = If[Head[ExpLag]=!=Plus,{ExpLag},List@@ExpLag];
+    ExpLag = (Normal[Series[#,{FR$CT,0,1}]]&)/@ExpLag;
+    ];
   ExpLag=DeleteCases[ExpLag,0];
 
   (* Formatting *)

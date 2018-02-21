@@ -1084,6 +1084,8 @@ ExtractCounterterms::usage="Main function to extract the counterterms from an ex
 
 LoopOrder::usage="Loop orders for the FeynArts interface.";
 
+OrderExpand::usage="Whether or not to expand the counterterms in powers of couplings. Default is True.";
+
 FR$LoopDum::usage="Flag to count the number of loops";
 
 FR$LoopOrder::usage="Number of loops";
