@@ -1098,10 +1098,10 @@ FR$Eps::usage = "Internal FeynRules symbol for the dimensional regulator.";
 FR$MU::usage = "Internal FeynRules symbol for the renormalisation scale.";
 FR$Cond::usage = "Internal FeynRules symbol for the condition function FR$Cond[a,b,c] = If[a==0,b,c].";
 
-FR$CT::usage = "FeynRules symbole for the one-loop counterterms expansion";
+FR$CT::usage = "FeynRules symbol for the one-loop counterterms expansion";
 
 OnShellRenormalization::usage = "return the renormalized Lagrangian in the on-shell scheme, i.e. all the masses are considered as external parameters. The 
-options are QCDOnly, FlavorMixing, Only2Point, Simplify2pt and Exclude4ScalarsCT";
+options are QCDOnly, FlavorMixing, Only2Point, Simplify2pt, Exclude4ScalarsCT and GhostRenorm";
 
 QCDOnly::usage = "If True, the on-shell renormalization is only done for the field having QCD interactions and the couplings with non-zero QDC interaction order.
  The default is False.";
@@ -1114,7 +1114,9 @@ Only2Point::usage = "If True, only the mass and field are renormalized and not t
 Simplify2pt::usage="If True, the mass and kinetic terms are simplified using the value of the internal parameter before renormalization is performed. 
 Default is True";
 
-Exclude4ScalarsCT::usage="if True, the four scalar terms are keep in the lagrangian but not renormalized. Default is False";
+Exclude4ScalarsCT::usage="If True, the four scalar terms are kept in the lagrangian but not renormalized. Default is False";
+
+GhostRenorm::usage="If True, the (anti)ghost fields are renormalized (useful for some theoretical studies). The default is False, where the (anti)ghost fields are kept in the lagrangian but not renormalized.";
 
 
 numQ[FR$Eps]=True;

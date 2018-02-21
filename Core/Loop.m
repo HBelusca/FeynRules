@@ -538,11 +538,11 @@ DZmixShift[fr_]:=Module[{xx,fi=AntiField2Field/@fr[[1,All,1]]},
 ];
 
 
-Options[OnShellRenormalization] = {QCDOnly->False,FlavorMixing->True,Only2Point->False,Simplify2pt->True,Exclude4ScalarsCT->False};
+Options[OnShellRenormalization] = {QCDOnly->False,FlavorMixing->True,Only2Point->False,Simplify2pt->True,Exclude4ScalarsCT->False,GhostRenorm->False};
 
 
 OnShellRenormalization[Lag_,options___]:=Module[{FieldRenoList,ExternalParamList,InternalParamList,internalMasses,massRules, deltaLagp,deltaLag,classname, classmembers,
-flavor,fi,paramreno,FreeM,Patbis,qcd,flm,only2,qcdind,qcdclasses,kk1,extNotMass,cvar,tmppara,itp,tmp,tmpRule,lkinmass,GetnFlavor,extfla,MassFreeQ,skin,no4S,lag4S,Pow,
+flavor,fi,paramreno,FreeM,Patbis,qcd,flm,only2,qcdind,qcdclasses,kk1,extNotMass,cvar,tmppara,itp,tmp,tmpRule,lkinmass,GetnFlavor,extfla,MassFreeQ,skin,no4S,noGhost,lag4S,Pow,
 deltaLagt,massspec,replist,InternalParamList2,lagtmp,frtmp,logfile},
 
 Off[Simplify::time];
@@ -551,6 +551,7 @@ flm=FlavorMixing/.{options}/.Options[OnShellRenormalization];
 only2=Only2Point/.{options}/.Options[OnShellRenormalization];
 skin=Simplify2pt/.{options}/.Options[OnShellRenormalization];
 no4S=Exclude4ScalarsCT/.{options}/.Options[OnShellRenormalization];
+noGhost=GhostRenorm/.{options}/.Options[OnShellRenormalization];
 
 logfile=OpenWrite[];
 
@@ -602,8 +603,13 @@ If[Length[internalMasses]>0&&
      Message[NLO::ExtMass];Return[]];
 
 Print["renormalizing the fields"];
-(*No renormalization of the ghost field is needed*)
-FieldRenoList=DeleteCases[FieldRenormalization[], _?(GhostFieldQ[#[[1]]] &)]/.FR$deltaZ[xx__]->FR$CT*FR$deltaZ[xx];
+FieldRenoList=FieldRenormalization[];
+If[noGhost,
+  (*No renormalization of the ghost field is needed*)
+  FieldRenoList=DeleteCases[FieldRenoList, _?(GhostFieldQ[#[[1]]] &)];
+];
+FieldRenoList=FieldRenoList/.FR$deltaZ[xx__]->FR$CT*FR$deltaZ[xx];
+
 (*Expand the flavors*)
 For[fi=1,fi<=Length[FieldRenoList],fi++,
   If[FlavoredQ[FieldRenoList[[fi,1]]],
