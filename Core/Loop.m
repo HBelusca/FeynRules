@@ -446,7 +446,7 @@ ExtractCounterterms[lagr_,ExpOrder_List,OptionsPattern[] (*options___*)]:=Block[
   Print["Parameter renormalization..."];
   ExpLag = Block[{PValue,valtmp,dependencies,PVr, PVl,muf,tmpdot},
     PValue=#/.TensDot->tmpdot//.{
-      del[_,_]->1,aa_?(FieldQ[#]===True || AntiFieldQ[#]===True&)[inds__]->1, aa_?(FieldQ[#]===True || AntiFieldQ[#]===True&)->1,
+      del[_,_]->1, gx_GaugeXi:>gx, aa_?(FieldQ[#]===True || AntiFieldQ[#]===True&)[inds__]->1, aa_?(FieldQ[#]===True || AntiFieldQ[#]===True&)->1,
       Ga[__]->1,ProjP[__]->1,ProjM[__]->1,
       tmpdot[__][_,_]->1,
       FR$deltaZ[__]->1,
