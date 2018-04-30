@@ -113,6 +113,7 @@ FieldRenormalization[]:=Block[{MyModule,MyRuleDelayed},
 (* ::Subsection:: *)
 (*Formatting the functions*)
 
+ParameterRenormalization[xiF:GaugeXi[field_]]:=RenPrm[xiF,{}];
 
 ParameterRenormalization[param_[inds__]]:=RenPrm[param,{inds}];
 
