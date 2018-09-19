@@ -1084,8 +1084,8 @@ WriteFACouplingDefinitions[outfile_] := Block[{},
 
 
 Options[WriteFeynArtsOutput] = {FlavorExpand -> False, IndexExpand-> False, MaxParticles -> Automatic, MinParticles -> Automatic, 
-          MaxCanonicalDimension -> Automatic, MinCanonicalDimension -> Automatic, SelectParticles -> Automatic, Output :> StringReplace[M$ModelName <> "_FA",{" "-> "_"}],CouplingRename->True,
-          Exclude4Scalars -> False, GenericFile -> True, DiracIndices->Automatic, LoopOrder->MR$Null, ApplyMomCons->True};
+          MaxCanonicalDimension -> Automatic, MinCanonicalDimension -> Automatic, SelectParticles -> Automatic, Output :> StringReplace[M$ModelName <> "_FA",{" "-> "_"}], CouplingRename->True,
+          Exclude4Scalars -> False, GenericFile -> True, DiracIndices->Automatic, LoopOrder->MR$Null, OrderExpand -> True, ApplyMomCons->True};
 
 
 (* ::Subsection:: *)
@@ -1100,7 +1100,7 @@ WriteFeynArtsOutput[lags__] := WriteFeynArtsOutput[{lags}] /; (And @@ ((Head[#] 
 
 WriteFeynArtsOutput[{lags__}, options___] := Block[{vertlength,verttype,tempclass, vertlistFA,genFileOpt,diracIndOpt,couplRenameOpt,j,vertN=1, 
 													WFAflavexp, defname,outfile, genfile, temp, tempoutfile, tempoptions, tempxi, Rulli, 
-													Massdone = {}, vertexlistFA, FlatDot, LoopOpt,CTlags,orderOpt,expandParam,MyPat,mylags = {lags},CTcnt=0,tmp,tmppara,wfoit},
+													Massdone = {}, vertexlistFA, FlatDot, LoopOpt,CTlags,ordExpOpt,orderOpt,expandParam,MyPat,mylags = {lags},CTcnt=0,tmp,tmppara,wfoit},
       Print[" - - - FeynRules interface to FeynArts - - -"];
       Print["      C. Degrande C. Duhr, 2013"];
       Print["      Counterterms: B. Fuks, 2012"];
@@ -1116,6 +1116,7 @@ WriteFeynArtsOutput[{lags__}, options___] := Block[{vertlength,verttype,tempclas
       diracIndOpt=DiracIndices/.{options}/.Options[WriteFeynArtsOutput];
 
       (* BEGIN Benj: Generating counterterms *)
+      ordExpOpt = OrderExpand/.{options}/.Options[WriteFeynArtsOutput];
       orderOpt=LoopOrder/.{options}/.Options[WriteFeynArtsOutput];
       LoopOpt=If[orderOpt=!=MR$Null,True,False];
       If[LoopOpt,
@@ -1129,7 +1130,7 @@ WriteFeynArtsOutput[{lags__}, options___] := Block[{vertlength,verttype,tempclas
  **)
         orderOpt = MapAt[MyPat[#]&, orderOpt, {All, 1}];
 
-        CTlags = Block[{},CTcnt++;Print["Turning to Lagrangian "<>ToString[CTcnt]<>"..."]; (ExtractCounterterms[#,orderOpt]-#)]&/@mylags;
+        CTlags = Block[{},CTcnt++;Print["Turning to Lagrangian "<>ToString[CTcnt]<>"..."]; (ExtractCounterterms[#, orderOpt(* For compatibility purposes *), OrderExpand -> ordExpOpt]-#)]&/@mylags;
 
 (** Fix the appearance of conjugated expansion parameters for terms with complex fields (ghosts, fermions) **)
         CTlags = CTlags/.Conjugate[MyPat[a_]]:>MyPat[a];
@@ -1143,7 +1144,10 @@ WriteFeynArtsOutput[{lags__}, options___] := Block[{vertlength,verttype,tempclas
         CTlags=OptimizeIndex/@CTlags;
         CTlags=CTlags/.(M$DeltaToParameters/.RuleDelayed[a_[orders__],b_]:>MyRule[b/.ids->MyPat[ids,__],b FR$LoopDum^Plus@orders]/.MyRule->Rule/.MyPat->Pattern);
         mylags=mylags + CTlags;
-        FR$Loop=False;,
+        FR$Loop=False;
+        (* Reset loop order only if we actually didn't want to perform an order expansion *)
+        If[Not[ordExpOpt],FR$LoopOrder=0;];
+        ,
         FR$LoopOrder=0;];
       (* END Benj *)
 
@@ -1268,23 +1272,38 @@ FR$FeynArtsInterface = False;
           ParallelSubmit[{wfoit,tmppara},({#1,Join[Simplify[Coefficient[#2,FR$CT,0],TimeConstraint->0.01],Coefficient[#2,FR$CT,1],2]}&) @@ tmppara],
           {wfoit,Length[vertexlistFA]}];
         vertexlistFA=WaitAll[tmp];
+
+(*** WRONG!!! How could I keep my self-energy counterterms then??? ***)
+
         (*Remove the tree-level component for the vertices with two legs or less*)
         tmp=Table[tmppara=vertexlistFA[[wfoit]];
           ParallelSubmit[{wfoit,tmppara},(If[Length[#1]>2,{#1,#2},{#1,Transpose[{#2[[All,1]]*0,#2[[All,2]]}]}]&) @@ tmppara],
           {wfoit,Length[vertexlistFA]}];
         vertexlistFA=WaitAll[tmp];
-        ,(*FR$DoPara=False*)
+
+(***)
+
+        ,
+
+        (*FR$DoPara=False*)
 		vertexlistFA = (FAStructure2 @@@ vertexlistFA)/.CSPRL->1;
 
         (*Split the tree-level and counterterms and put them as two different entries*)
         vertexlistFA = ({#1,Join[Simplify[Coefficient[#2,FR$CT,0],TimeConstraint->0.01],Coefficient[#2,FR$CT,1],2]}&)@@@vertexlistFA;
+
+(*** WRONG!!! How could I keep my self-energy counterterms then??? ***)
+
         (*Remove the tree-level component for the vertices with two legs or less*)
         vertexlistFA = (If[Length[#1]>2,{#1,#2},{#1,Transpose[{#2[[All,1]]*0,#2[[All,2]]}]}]&)@@@vertexlistFA;
+
+(***)
+
         ];(*end if FR$DoPara*)
 
         vertexlistFA = DeleteCases[vertexlistFA,{a_,_?(Union[#]==={{0,0}}&)}];
+        vertexlistFA = DeleteCases[vertexlistFA, {_,_,_, 0 ,___}|{_,_,_,{0,0},___}];
 
-        vertexlistFA = DeleteCases[vertexlistFA, {_,_,_, 0 ,___}|{_,_,_,{0,0},___}];,
+        ,
         (* else *)
 
         If[FR$DoPara,      
@@ -1297,9 +1316,14 @@ FR$FeynArtsInterface = False;
 
         (*Split the tree-level and counterterms and put them as two different entries*)
         vertexlistFA = ({#1,Join[Simplify[Coefficient[#2,FR$CT,0]],Coefficient[#2,FR$CT,1],2]}&)@@@vertexlistFA;
+
+(*** WRONG!!! How could I keep my self-energy counterterms then??? ***)
+
         (*Remove the tree-level component for the vertices with two legs or less*)
         vertexlistFA = (If[Length[#1]>2,{#1,#2},{#1,Transpose[{#2[[All,1]]*0,#2[[All,2]]}]}]&)@@@vertexlistFA;
         vertexlistFA = DeleteCases[vertexlistFA,{a_,_?(Union[#]==={{0,0}}&)}];
+
+(***)
 		];
 
        (* Coupling renaming *)
@@ -1308,6 +1332,8 @@ FR$FeynArtsInterface = False;
          M$FACouplings={};
          vertexlistFA = FACouplingRenaming[vertexlistFA];
 	    ];
+
+      Print["vertexlistFA = ",vertexlistFA];
 
       (* ******************** *)
       (* The GaugeXi function *)
@@ -1674,7 +1700,7 @@ LorentzGenCouplings[vertextype_, FAPartContent_, vertex_, fc_] := Block[{temp, t
 (*Killing tree-level bilinears*)
 
 
-KillBil[{parts_List,expr_}] := Block[{tree=expr /. FR$LoopDum ->0},
+KillBil[{parts_List,expr_}] := Block[{tree=expr /. FR$LoopDum -> 0 /. FR$CT -> 0},
 
     If[Length[parts]!=2,
        Return[{parts,expr}]
